@@ -1,0 +1,14 @@
+{
+    "name": "@ringoc/crawler",
+    "version": "0.0.1",
+    "dependencies": {
+        "axios": "^0.27.2",
+        "jsonata": "^1.8.6",
+        "md5": "^2.3.0",
+        "puppeteer": "^13.7.0",
+        "puppeteer-afp": "^1.0.1",
+        "puppeteer-extra": "^3.2.3",
+        "puppeteer-extra-plugin-stealth": "^2.9.0",
+        "puppeteer-page-proxy": "^1.2.8"
+    }
+}

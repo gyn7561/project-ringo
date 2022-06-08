@@ -1,0 +1,7 @@
+node_modules
+chromedata
+*.log
+apify_storage
+抓取数据
+/projects
+/projects/**/config.js

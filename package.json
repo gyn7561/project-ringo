@@ -1,0 +1,13 @@
+{
+    "name": "project-ringoc",
+    "version": "0.0.1",
+    "license": "ISC",
+    "private": true,
+    "workspaces": [
+        "packages/*",
+        "projects/*"
+    ],
+    "scripts": {
+        "publish-tools": "yarn workspace @ringoc/crawler-tools publish"
+    }
+}

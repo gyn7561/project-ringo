@@ -1,0 +1,16 @@
+{
+    "name": "@ringoc/crawler-tools",
+    "version": "0.0.2",
+    "main": "index.js",
+    "license": "ISC",
+    "description": "RINGOC爬虫工具包",
+    "dependencies": {
+        "level": "^8.0.0",
+        "lmdb": "^2.3.10",
+        "log4js": "^6.4.6",
+        "node-xlsx": "^0.21.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
