@@ -9,6 +9,7 @@ module.exports = {
         });
     },
     logger: log4js.getLogger(),
-    storage: require("./storage"),
-    excel: require("./excel")
+    storage: require("./storage/storage"),
+    excel: require("./excel"),
+    gzip: require("node-gzip")
 };

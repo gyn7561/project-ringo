@@ -1,4 +1,5 @@
 var lmdb = require('lmdb');
+var CommonKV = require('./commonKV');
 
 /**
  * LMDB 内存型KV数据库,默认压缩,适合跑一些数据不算很大的数据
@@ -30,13 +31,14 @@ function openLevelDBStorage(path, opt) {
     return db;
 }
 
-function openSqliteKvStorage(path, opt) {
-    //todo
-
+function createCommonKV(base, type) {
+    return new CommonKV(base, type);
 }
 
 
 module.exports = {
     openLMDBKvStorage,
-    openLevelDBStorage
+    openLevelDBStorage,
+    createCommonKV,
+    sequelize: require("./sequelize")
 };

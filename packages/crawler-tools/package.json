@@ -5,12 +5,23 @@
     "license": "ISC",
     "description": "RINGOC爬虫工具包",
     "dependencies": {
+        "adm-zip": "^0.5.9",
+        "cheerio": "^1.0.0-rc.11",
         "level": "^8.0.0",
         "lmdb": "^2.3.10",
         "log4js": "^6.4.6",
-        "node-xlsx": "^0.21.0"
+        "node-gzip": "^1.1.2",
+        "node-xlsx": "^0.21.0",
+        "sequelize": "^6.20.1",
+        "sqlite3": "^5.0.8"
     },
     "publishConfig": {
         "access": "public"
+    },
+    "devDependencies": {
+        "jest": "^28.1.1"
+    },
+    "scripts": {
+        "jest": "jest --verbose"
     }
 }

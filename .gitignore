@@ -5,3 +5,4 @@ apify_storage
 抓取数据
 /projects
 /projects/**/config.js
+test_data

@@ -20,7 +20,7 @@ async function extractAttrByCss(pageOrHtml, attrList, css) {
                 let attrName = attrList[j];
                 if (attrName === "text") {
                     obj[attrName] = $(dom).text();
-                } else if (attrName === "html") { 
+                } else if (attrName === "html") {
                     obj[attrName] = $(dom).html();
                 }
                 else {
@@ -74,6 +74,19 @@ async function extractAttrByCssSingle(pageOrHtml, attrList, css) {
     return array[0];
 }
 
+async function extractSingleAttrByCss(pageOrHtml, attr, css) {
+    let array = await extractAttrByCss(pageOrHtml, [attr], css);
+    return array.map(d => d[attr]);
+}
+
+
+async function extractSingleAttrByCssSingle(pageOrHtml, attr, css) {
+    let array = await extractSingleAttrByCss(pageOrHtml, attr, css);
+    return array[0];
+}
+
+
 module.exports = {
-    extractAttrByCss, extractAllUrls, extractAttrByCssSingle
+    extractAttrByCss, extractAllUrls, extractAttrByCssSingle,
+    extractSingleAttrByCss, extractSingleAttrByCssSingle
 }
