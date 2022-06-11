@@ -1,0 +1,21 @@
+{
+    "name": "@ringoc/batch-archive",
+    "version": "0.0.1-1",
+    "main": "index.js",
+    "license": "MIT",
+    "description": "大量小文本文件本地存储解决方案",
+    "dependencies": {
+        "adm-zip": "^0.5.9",
+        "async-lock": "^1.3.1",
+        "uuid": "^8.3.2"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "devDependencies": {
+        "jest": "^28.1.1"
+    },
+    "scripts": {
+        "jest": "jest --verbose"
+    }
+}
