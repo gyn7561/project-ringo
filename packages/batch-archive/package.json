@@ -1,6 +1,6 @@
 {
     "name": "@ringoc/batch-archive",
-    "version": "0.0.1-1",
+    "version": "0.0.1-2",
     "main": "index.js",
     "license": "MIT",
     "description": "大量小文本文件本地存储解决方案",
