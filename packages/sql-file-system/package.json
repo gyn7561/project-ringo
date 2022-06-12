@@ -1,14 +1,12 @@
 {
-    "name": "@ringoc/batch-archive",
+    "name": "@ringoc/sql-file-system",
     "version": "0.0.1-2",
     "main": "index.js",
     "license": "MIT",
-    "description": "大量小文本文件本地存储解决方案",
+    "description": "一个由sql管理的文件系统",
     "dependencies": {
-        "adm-zip": "^0.5.9",
-        "async-lock": "^1.3.1",
-        "body-parser": "^1.20.0",
-        "express": "^4.18.1",
+        "sequelize": "^6.20.1",
+        "sqlite3": "^5.0.8",
         "uuid": "^8.3.2"
     },
     "publishConfig": {

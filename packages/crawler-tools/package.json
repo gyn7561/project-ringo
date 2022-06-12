@@ -5,11 +5,15 @@
     "license": "ISC",
     "description": "RINGOC爬虫工具包",
     "dependencies": {
+        "@keyv/mongo": "^2.1.6",
+        "@keyv/sqlite": "^3.5.2",
         "adm-zip": "^0.5.9",
         "cheerio": "^1.0.0-rc.11",
+        "keyv": "^4.3.0",
         "level": "^8.0.0",
         "lmdb": "^2.3.10",
         "log4js": "^6.4.6",
+        "minio": "^7.0.28",
         "node-gzip": "^1.1.2",
         "node-xlsx": "^0.21.0",
         "sequelize": "^6.20.1",
@@ -23,5 +27,8 @@
     },
     "scripts": {
         "jest": "jest --verbose"
+    },
+    "bin": {
+        "ringoc-minio": "./storage/minio/bin.js"
     }
 }

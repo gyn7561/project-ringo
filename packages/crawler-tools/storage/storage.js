@@ -35,10 +35,11 @@ function createCommonKV(base, type) {
     return new CommonKV(base, type);
 }
 
-
 module.exports = {
     openLMDBKvStorage,
     openLevelDBStorage,
     createCommonKV,
-    sequelize: require("./sequelize")
+    sequelize: require("./sequelize"),
+    keyv: require("./keyv"),
+    minio: require("./minio/minio")
 };

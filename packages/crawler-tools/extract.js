@@ -87,6 +87,7 @@ async function extractSingleAttrByCssSingle(pageOrHtml, attr, css) {
 
 
 module.exports = {
+    cheerio,
     extractAttrByCss, extractAllUrls, extractAttrByCssSingle,
     extractSingleAttrByCss, extractSingleAttrByCssSingle
 }

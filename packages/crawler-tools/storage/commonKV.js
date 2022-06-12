@@ -1,4 +1,7 @@
 
+/**
+ *  转用 keyv
+ */
 class CommonKV {
     constructor(base, type) {
         this.type = type;
@@ -28,6 +31,18 @@ class CommonKV {
         }
     }
 
+    async delete(key) {
+        switch (this.type) {
+            case "sequelize":
+            // return await this.base.upsert({ key: key, value: value });
+            case "lmdb":
+            // return await this.base.put(key, value);
+            case "level":
+                return await this.base.del(key, value);
+        }
+
+    }
+
     async get(key) {
         switch (this.type) {
             case "sequelize":
@@ -36,7 +51,15 @@ class CommonKV {
             case "lmdb":
                 return await this.base.get(key);
             case "level":
-                return await this.base.get(key);
+                try {
+                    return await this.base.get(key);
+                } catch (err) {
+                    if (err.code === 'LEVEL_NOT_FOUND') {
+                        return null;
+                    } else {
+                        throw err;
+                    }
+                }
         }
     }
 
