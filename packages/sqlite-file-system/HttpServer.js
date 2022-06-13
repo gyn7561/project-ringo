@@ -28,7 +28,8 @@ module.exports = function (fs, port = 0) {
     app.get("/download", async (req, res) => {
         let key = req.query.key;
         let result = await fs.readFile(key);
-        res.setHeader('Content-Disposition', 'attachment; filename=' + key);
+        let { fileName } = fs.parseFileName(key);
+        res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
         res.type('application/octet-stream');
         res.send(result);
     });
@@ -42,7 +43,7 @@ module.exports = function (fs, port = 0) {
     let server = app.listen(port, function () {
         let addr = `http://localhost:${server.address().port}`;
         console.log('BatchArchive Http Server Listening on port ' + server.address().port + " " + addr);
-        let uiUrl = `https://ringoc-ui.vercel.app/SFS/${encodeURIComponent(addr)}/1/`;
+        let uiUrl = `https://ringo-ui.vercel.app/SFS/${encodeURIComponent(addr)}/1/`;
         console.log("UI: " + uiUrl);
     });
 }

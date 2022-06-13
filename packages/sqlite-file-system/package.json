@@ -1,6 +1,6 @@
 {
     "name": "@ringoc/sqlite-file-system",
-    "version": "0.0.1-2",
+    "version": "0.0.1",
     "main": "index.js",
     "license": "MIT",
     "description": "一个由sql管理的文件系统",
@@ -8,6 +8,7 @@
         "body-parser": "^1.20.0",
         "express": "^4.18.1",
         "node-gzip": "^1.1.2",
+        "replaceall": "^0.1.6",
         "sequelize": "^6.20.1",
         "sqlite3": "^5.0.8",
         "unix-path-resolve": "^1.0.2",
@@ -22,6 +23,10 @@
     "scripts": {
         "start": "node app.js",
         "jest": "jest --verbose",
-        "http": "node ./bin/http.js"
+        "http": "sfs-http --path ./test_data --port 13365",
+        "benchmark": "node ./benchmark.js"
+    },
+    "bin": {
+        "sfs-http": "./bin/http.js"
     }
 }

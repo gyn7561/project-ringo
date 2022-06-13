@@ -7,7 +7,8 @@ async function initVol(savePath, id) {
     let volSqlitePath = path.resolve(fullPath, `${id}.sqlite.db`);
     const sequelize = new Sequelize({
         dialect: "sqlite",
-        storage: volSqlitePath
+        storage: volSqlitePath,
+        logging: false
     });
     const Storage = sequelize.define('Storage', {
         id: {
@@ -21,6 +22,7 @@ async function initVol(savePath, id) {
         }
     });
     await Storage.sync();
+    await Storage.sequelize.query(`PRAGMA journal_mode = WAL;`);
     return Storage;
 }
 
@@ -29,7 +31,8 @@ async function initMain(savePath) {
     let mainSqlitePath = path.resolve(fullPath, "main.sqlite.db");
     const sequelize = new Sequelize({
         dialect: "sqlite",
-        storage: mainSqlitePath
+        storage: mainSqlitePath,
+        logging: false
     });
     class Files extends Model {
         isDir() {
@@ -70,7 +73,7 @@ async function initMain(savePath) {
 
     await Files.sync();
     await Info.sync();
-
+    await Files.sequelize.query(`PRAGMA journal_mode = WAL;`);
     return { Files, Info };
 }
 

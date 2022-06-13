@@ -9,6 +9,6 @@
     ],
     "scripts": {
         "publish-tools": "yarn workspace @ringoc/crawler-tools publish",
-        "publish-batch-archive": "yarn workspace @ringoc/batch-archive publish"
+        "publish-sqlite-file-system": "yarn workspace @ringoc/sqlite-file-system publish"
     }
 }

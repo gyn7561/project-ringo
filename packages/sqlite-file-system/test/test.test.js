@@ -2,7 +2,7 @@ let FileSystem = require("../FileSystem");
 let nfs = require("fs");
 
 
-let fs = new FileSystem("./test");
+let fs = new FileSystem("./test_data");
 test("init", async () => {
     await fs.init();
     await fs.saveData("/GGGG.txt", "sdadasdshhdbshb");

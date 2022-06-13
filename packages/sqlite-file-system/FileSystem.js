@@ -3,7 +3,7 @@ let uuid = require("uuid");
 const resolve = require('unix-path-resolve')
 const { gzip, ungzip } = require('node-gzip');
 const Sequelize = require("sequelize");
-
+var replaceall = require("replaceall");
 const Op = Sequelize.Op;
 
 
@@ -23,6 +23,10 @@ module.exports = class FileSystem {
         this.savePath = savePath;
         this.volDBMap = new Map();
         this.zipFileExtensions = new Set(["txt", "json", "html"]);
+    }
+
+    parseFileName(path){
+        return parseFileName(path);
     }
 
     async init() {
@@ -138,7 +142,7 @@ module.exports = class FileSystem {
         let result = await this.mainDB.Files.findAll({
             where: {
                 fileName: {
-                    [Op.like]: `%${name}%`
+                    [Op.substring]: `%${name}%`
                 }
             },
             raw: true
