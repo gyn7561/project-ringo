@@ -2,6 +2,9 @@ let seq = require("./sequelize/sequelize");
 let uuid = require("uuid");
 const resolve = require('unix-path-resolve')
 const { gzip, ungzip } = require('node-gzip');
+const Sequelize = require("sequelize");
+
+const Op = Sequelize.Op;
 
 
 function parseFileName(path) {
@@ -65,21 +68,81 @@ module.exports = class FileSystem {
         let { fileName, parentPath, extension, fullPath } = parseFileName(path);
         let fileUuid = uuid.v4();
         let volDb = await this.getVolDB("0");
-        let saveData = data;
+
+        let saveData = Buffer.from(data);
+        let size = saveData.byteLength;
         if (this.zipFileExtensions.has(extension)) {
             saveData = await gzip(data);
         }
         let file = await volDb.create({ id: fileUuid, data: saveData });
         await file.save();
+
         if (exists) {
             let data = await this.mainDB.Files.findByPk(fullPath);
             let id = data.getDataValue("storagePosition");
-            let fileUuid = data.getDataValue("fileUuid");
-            await this.mainDB.Files.upsert({ fullPath: fullPath, size: 1, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" });
-            this.#deleteVolFile(id, fileUuid);
+            let oldFileUuid = data.getDataValue("fileUuid");
+            await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" });
+            this.#deleteVolFile(id, oldFileUuid);
         } else {
-            await this.mainDB.Files.upsert({ fullPath: fullPath, size: 1, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" });
+            await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" });
         }
     }
 
+    async readFile(path) {
+        let { fullPath, extension } = parseFileName(path);
+        let data = await this.mainDB.Files.findByPk(fullPath);
+        if (!data) {
+            throw new Error("找不到文件" + path);
+        }
+        let volId = data.getDataValue("storagePosition");
+        let fileUuid = data.getDataValue("fileUuid");
+        let volDb = await this.getVolDB(volId);
+        let findObj = await volDb.findByPk(fileUuid);
+        let saveData = findObj.getDataValue("data");
+        if (this.zipFileExtensions.has(extension)) {
+            saveData = await ungzip(saveData);
+        }
+        return saveData;
+    }
+
+    async readFileAsString(path) {
+        let buffer = await this.readFile(path);
+        return new String(buffer).toString();
+    }
+
+    async listFiles(parentPath) {
+        let { fullPath } = parseFileName(parentPath);
+        let result = await this.mainDB.Files.findAll({
+            where: { parentPath: fullPath },
+            raw: true
+        });
+        return result;
+    }
+
+    async listFilesLimit(parentPath, start, limit) {
+        let { fullPath } = parseFileName(parentPath);
+        let result = await this.mainDB.Files.findAll({
+            where: {
+                parentPath: fullPath,
+                fullPath: {
+                    [Op.gte]: start
+                }
+            },
+            limit: limit,
+            raw: true
+        });
+        return result;
+    }
+
+    async findFiles(name) {
+        let result = await this.mainDB.Files.findAll({
+            where: {
+                fileName: {
+                    [Op.like]: `%${name}%`
+                }
+            },
+            raw: true
+        });
+        return result;
+    }
 }

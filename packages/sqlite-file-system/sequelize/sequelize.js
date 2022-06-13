@@ -47,14 +47,17 @@ async function initMain(savePath) {
             type: DataTypes.STRING(255),
             allowNull: false
         },
+        fileName: {
+            type: DataTypes.STRING(255),
+            allowNull: true
+        },
         size: DataTypes.INTEGER,
         storagePosition: DataTypes.STRING(255),
         fileUuid: DataTypes.STRING(32)
     }, {
         sequelize: sequelize,
-        indexes: [{ fields: ["parentPath"], unique: false }]
+        indexes: [{ fields: ["parentPath"], unique: false }, { fields: ["fileName"], unique: false }]
     });
-
 
     const Info = sequelize.define('Info', {
         id: {

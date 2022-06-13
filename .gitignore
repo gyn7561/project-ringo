@@ -6,3 +6,4 @@ apify_storage
 /projects
 /projects/**/config.js
 test_data
+*.sqlite.db
