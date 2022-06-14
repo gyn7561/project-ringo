@@ -29,7 +29,8 @@ module.exports = function (fs, port = 0) {
         let key = req.query.key;
         let result = await fs.readFile(key);
         let { fileName } = fs.parseFileName(key);
-        res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
+        console.log(fileName);
+        res.setHeader('Content-Disposition', 'attachment; filename=' + encodeURIComponent(fileName));
         res.type('application/octet-stream');
         res.send(result);
     });

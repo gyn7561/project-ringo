@@ -44,6 +44,8 @@ async function extractAttrByCss(pageOrHtml, attrList, css) {
                     let attrName = attrList[j];
                     if (attrName === "text") {
                         obj[attrName] = dom.textContent;
+                    } else if (attrName === "html") {
+                        obj[attrName] = dom.innerHTML;
                     } else {
                         obj[attrName] = dom.getAttribute(attrName);
                     }

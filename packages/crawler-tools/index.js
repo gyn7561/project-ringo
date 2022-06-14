@@ -11,5 +11,6 @@ module.exports = {
     logger: log4js.getLogger(),
     storage: require("./storage/storage"),
     excel: require("./excel"),
+    hash: require("./hash"),
     gzip: require("node-gzip")
 };
