@@ -35,12 +35,18 @@ async function initMain(savePath) {
         logging: false
     });
     class Files extends Model {
-        isDir() {
-            return this.fullPath.endsWith("/");
-        }
+        // isDir() {
+        //     return this.fullPath.endsWith("/");
+        // }
     }
 
     Files.init({
+        isDir: {
+            type: DataTypes.VIRTUAL,
+            get() {
+                return this.fileUuid === null;
+            }
+        },
         fullPath: {
             type: DataTypes.STRING(255),
             allowNull: false,
@@ -48,19 +54,23 @@ async function initMain(savePath) {
         },
         parentPath: {
             type: DataTypes.STRING(255),
-            allowNull: false
+            allowNull: true
         },
         fileName: {
             type: DataTypes.STRING(255),
             allowNull: true
         },
         size: DataTypes.INTEGER,
-        storagePosition: DataTypes.STRING(255),
+        storagePosition: DataTypes.STRING(32),
         fileUuid: DataTypes.STRING(32)
     }, {
         sequelize: sequelize,
-        indexes: [{ fields: ["parentPath"], unique: false }, { fields: ["fileName"], unique: false }]
+        indexes: [{ fields: ["parentPath"], unique: false },
+        { fields: ["fileName"], unique: false },
+        { fields: ["storagePosition"], unique: false }]
     });
+
+    Files.hasMany(Files, { foreignKey: "parentPath", onDelete: "RESTRICT", onUpdate: "RESTRICT" });
 
     const Info = sequelize.define('Info', {
         id: {
@@ -74,6 +84,14 @@ async function initMain(savePath) {
     await Files.sync();
     await Info.sync();
     await Files.sequelize.query(`PRAGMA journal_mode = WAL;`);
+    if (!(await Files.findByPk("/"))) {
+        let root = await Files.create({ fullPath: "/" });
+        await root.save();
+    }
+    if (!(await Info.findByPk("init_info"))) {
+        let root = await Info.create({ id: "init_info", info: { version: "0.0.2" } });
+        await root.save();
+    }
     return { Files, Info };
 }
 

@@ -1,7 +1,7 @@
 var express = require('express');
 var bodyParser = require("body-parser");
 // 当对主页发出 GET 请求时，响应“hello world”
-
+let SFS = require("./");
 
 module.exports = function (fs, port = 0) {
     var app = express();
@@ -28,7 +28,7 @@ module.exports = function (fs, port = 0) {
     app.get("/download", async (req, res) => {
         let key = req.query.key;
         let result = await fs.readFile(key);
-        let { fileName } = fs.parseFileName(key);
+        let { fileName } = SFS.PathTool.parseFilePath(key);
         console.log(fileName);
         res.setHeader('Content-Disposition', 'attachment; filename=' + encodeURIComponent(fileName));
         res.type('application/octet-stream');

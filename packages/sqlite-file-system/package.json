@@ -1,6 +1,6 @@
 {
     "name": "@ringoc/sqlite-file-system",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "main": "index.js",
     "license": "MIT",
     "description": "一个由sql管理的文件系统",

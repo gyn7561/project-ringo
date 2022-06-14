@@ -1,21 +1,10 @@
 let seq = require("./sequelize/sequelize");
 let uuid = require("uuid");
-const resolve = require('unix-path-resolve')
 const { gzip, ungzip } = require('node-gzip');
 const Sequelize = require("sequelize");
 var replaceall = require("replaceall");
 const Op = Sequelize.Op;
-
-
-function parseFileName(path) {
-    let fullPath = resolve("/", path);
-    let split = fullPath.split("/");
-    let fileName = split[split.length - 1];
-    let parentPath = split.slice(0, split.length - 1).join("/") + "/";
-    let extension = (fileName.split(".")[1] || "").toLowerCase();
-    return { fileName, parentPath, extension, fullPath };
-}
-
+const PathTool = require("./PathTool");
 
 module.exports = class FileSystem {
 
@@ -23,10 +12,6 @@ module.exports = class FileSystem {
         this.savePath = savePath;
         this.volDBMap = new Map();
         this.zipFileExtensions = new Set(["txt", "json", "html"]);
-    }
-
-    parseFileName(path){
-        return parseFileName(path);
     }
 
     async init() {
@@ -40,18 +25,18 @@ module.exports = class FileSystem {
         return this.volDBMap.get(id);
     }
 
-    async saveData(path, data) {
-        return this._saveData(path, data);
-    }
 
     async exists(path) {
-        let { fullPath } = parseFileName(path);
+        let { fullPath } = PathTool.parseFilePath(path);
         let count = await this.mainDB.Files.count({ where: { fullPath: fullPath } });
         return count === 1;
     }
 
     async deleteFile(path) {
-        let { fullPath } = parseFileName(path);
+        let { fullPath, validate } = PathTool.parseFilePath(path);
+        if (!validate) {
+            throw new Error("");
+        }
         let data = await this.mainDB.Files.findByPk(fullPath);
         if (!data) {
             throw new Error("找不到文件" + path);
@@ -67,9 +52,32 @@ module.exports = class FileSystem {
         await volDb.destroy({ where: { id: fileUuid } });
     }
 
-    async _saveData(path, data) {
+    async mkdir(path) {
+        let { parentPath, fullPath, fileName } = PathTool.parseDirPath(path);
+        try {
+            await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, parentPath: parentPath });
+        } catch (error) {
+            console.log(error);
+            console.log(error.original);
+            if (error.original && error.original.code === "SQLITE_CONSTRAINT") {
+                throw new Error("创建文件夹失败 找不到父文件夹" + `${fullPath} (${path})`);
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    async deldir(path) {
+        // let { parentPath, fullPath } = PathTool.parseFilePath(path);
+        let files = await this.listFiles(path);
+        for (let i = 0; i < files.length; i++) {
+
+        }
+    }
+
+    async writeFile(path, data) {
         let exists = await this.exists(path);
-        let { fileName, parentPath, extension, fullPath } = parseFileName(path);
+        let { fileName, parentPath, extension, fullPath } = PathTool.parseFilePath(path);
         let fileUuid = uuid.v4();
         let volDb = await this.getVolDB("0");
 
@@ -80,7 +88,6 @@ module.exports = class FileSystem {
         }
         let file = await volDb.create({ id: fileUuid, data: saveData });
         await file.save();
-
         if (exists) {
             let data = await this.mainDB.Files.findByPk(fullPath);
             let id = data.getDataValue("storagePosition");
@@ -88,12 +95,13 @@ module.exports = class FileSystem {
             await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" });
             this.#deleteVolFile(id, oldFileUuid);
         } else {
+            console.log({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" })
             await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" });
         }
     }
 
     async readFile(path) {
-        let { fullPath, extension } = parseFileName(path);
+        let { fullPath, extension } = PathTool.parseFilePath(path);
         let data = await this.mainDB.Files.findByPk(fullPath);
         if (!data) {
             throw new Error("找不到文件" + path);
@@ -115,7 +123,7 @@ module.exports = class FileSystem {
     }
 
     async listFiles(parentPath) {
-        let { fullPath } = parseFileName(parentPath);
+        let { fullPath } = PathTool.parseFilePath(parentPath);
         let result = await this.mainDB.Files.findAll({
             where: { parentPath: fullPath },
             raw: true
@@ -124,7 +132,7 @@ module.exports = class FileSystem {
     }
 
     async listFilesLimit(parentPath, start, limit) {
-        let { fullPath } = parseFileName(parentPath);
+        let { fullPath } = PathTool.parseFilePath(parentPath);
         let result = await this.mainDB.Files.findAll({
             where: {
                 parentPath: fullPath,
