@@ -89,7 +89,7 @@ async function initMain(savePath) {
         await root.save();
     }
     if (!(await Info.findByPk("init_info"))) {
-        let root = await Info.create({ id: "init_info", info: { version: "0.0.2" } });
+        let root = await Info.create({ id: "init_info", info: { version: "0.0.4" } });
         await root.save();
     }
     return { Files, Info };

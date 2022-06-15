@@ -10,8 +10,13 @@ function parseFilePath(path) {
     return { fileName, parentPath, extension, fullPath, validate: !fullPath.endsWith("/") && !path.endsWith("/") && !path.endsWith("\\") };
 }
 
+
 function parseDirPath(path) {
     let fullPath = resolve("/", path) + "/";
+    if (fullPath === "//") {//根目录特殊处理
+        return { fullPath: "/", fileName: "", parentPath: null };
+    }
+
     let split = fullPath.split("/");
     let fileName = split[split.length - 2];
     let parentPath = split.slice(0, split.length - 2).join("/") + "/";

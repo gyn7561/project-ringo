@@ -5,47 +5,109 @@ let nfs = require("fs");
 let fs = new FileSystem("./test_data");
 test("init", async () => {
     await fs.init();
-
 })
 
 test("save", async () => {
     await fs.writeFile("/GGGG.txt", "TESTTEST");
-    let exists = await fs.exists("/NOT_EXISTS.txt");
+    await expect(async () => {
+        await fs.writeFile("/没有的文件夹/null.txt", "sss");
+    }).rejects.toThrow("写入文件失败，可能是没有父文件夹");
+    let exists = await fs.existsFile("/NOT_EXISTS.txt");
     expect(exists).toBe(false);
-    exists = await fs.exists("/GGGG.txt");
+    exists = await fs.existsFile("/GGGG.txt");
     expect(exists).toBe(true);
+    exists = await fs.existsFile("/没有的文件夹/null.txt");
+    expect(exists).toBe(false);
 });
 
 test("delete", async () => {
     await fs.writeFile("/delete.txt", "sdadasdshhdbshb");
-    let exists = await fs.exists("/delete.txt");
+    let exists = await fs.existsFile("/delete.txt");
     expect(exists).toBe(true);
     await fs.deleteFile("/delete.txt");
-    exists = await fs.exists("/delete.txt");
+    exists = await fs.existsFile("/delete.txt");
     expect(exists).toBe(false);
+
+    await expect(async () => {
+        await fs.deleteFile("/没有的文件夹/null.txt");
+    }).rejects.toThrow("找不到文件");
+
+    await expect(async () => {
+        await fs.deleteFile("");
+    }).rejects.toThrow("文件路径不合法");
+
 })
+
 
 test("read", async () => {
     await fs.writeFile("/read.txt", "TESTSTR");
-    let exists = await fs.exists("/read.txt");
+    let exists = await fs.existsFile("/read.txt");
     expect(exists).toBe(true);
-    let data = await fs.readFileAsString("/read.txt");
+    let data = await fs.readFileAsString("read.txt");
     expect(data).toBe("TESTSTR");
+
+    await expect(async () => {
+        await fs.readFileAsString("不存在的文件.txt");
+    }).rejects.toThrow("找不到文件");
+
 })
 
 test("mkdir", async () => {
     await fs.mkdir("/data");
+    expect(await fs.existsDir("/data")).toBe(true);
+    expect(await fs.existsDir("/data/")).toBe(true);
+    expect(await fs.existsDir("/data不存在/")).toBe(false);
     await fs.writeFile("/data/test.txt", "TESTSTR");
-    // expect(result.map(s => s.fileName).length).toBe(1);
+    expect(await fs.readFileAsString("/data/test.txt")).toBe("TESTSTR");
+    await fs.mkdir("/data/dir1");
+    await fs.writeFile("/data/dir1/test.txt", "TESTSTR");
+    expect(await fs.readFileAsString("/data/dir1/test.txt")).toBe("TESTSTR");
+    await fs.mkdir("/data/dir1/dir2");
+    await fs.writeFile("/data/dir1/dir2/test.txt", "TESTSTR");
+    expect(await fs.readFileAsString("/data/dir1/dir2/test.txt")).toBe("TESTSTR");
+    await fs.mkdir("/data/dir3");
+    await fs.writeFile("/data/dir3/test.txt", "TESTSTR");
+    expect(await fs.readFileAsString("/data/dir3/test.txt")).toBe("TESTSTR");
 });
+
+test("del dir", async () => {
+    expect(await fs.readFileAsString("/data/test.txt")).toBe("TESTSTR");
+    await fs.deldir("/data/");
+    expect(await fs.existsDir("/data/")).toBe(false);
+});
+
 
 test("listFiles", async () => {
     let result = await fs.listFiles("/");
-    expect(result.map(s => s.fileName).length).toBe(3);
+    expect(result.length).toBe(2);
+    expect(result.filter(f => f.fullPath === "/read.txt").length).toBe(1);
+    expect(result.filter(f => f.fullPath === "/GGGG.txt").length).toBe(1);
 });
 
 test("findFiles", async () => {
     let result = await fs.findFiles("read");
-    expect(result.map(s => s.fileName).length).toBe(1);
+    expect(result.filter(f => f.fullPath === "/read.txt").length).toBe(1);
+});
+
+
+test("batchWrite", async () => {
+    await fs.batchWriteFiles([{ path: "/b1.txt", data: "TESTTEST" }, { path: "/b2.txt", data: "TESTTEST" }]);
+    let b1Data = await fs.readFileAsString("/b1.txt");
+    expect(b1Data).toBe("TESTTEST");
+    await fs.batchWriteFiles([{ path: "/b1.txt", data: "TESTTEST2" }, { path: "/b2.txt", data: "TESTTEST" }]);
+    b1Data = await fs.readFileAsString("/b1.txt");
+    expect(b1Data).toBe("TESTTEST2");
+    await expect(async () => {
+        await fs.batchWriteFiles([{ path: "/null/b1.txt", data: "TESTTEST" }, { path: "/null/b2.txt", data: "TESTTEST" }]);
+    }).rejects.toThrow();
+});
+
+test("batchDelete", async () => {
+
+    expect(await fs.existsFile("/b1.txt")).toBe(true);
+    expect(await fs.existsFile("/b2.txt")).toBe(true);
+    await fs.batchDeleteFiles(["/b1.txt", "./b2.txt"]);
+    expect(await fs.existsFile("/b1.txt")).toBe(false);
+    expect(await fs.existsFile("/b2.txt")).toBe(false);
 });
 

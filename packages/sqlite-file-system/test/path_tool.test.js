@@ -15,7 +15,9 @@ test("file path parse", () => {
     info = SFS.PathTool.parseFilePath("\\a.txt");
     expect(info).toEqual({ fileName: "a.txt", parentPath: "/", extension: "txt", fullPath: "/a.txt", validate: true });
 
-
+    info = SFS.PathTool.parseDirPath("/");
+    expect(info).toEqual({ fullPath: "/", fileName: "", parentPath: null });
+    
     info = SFS.PathTool.parseDirPath("\\a.txt/");
     expect(info).toEqual({ fullPath: "/a.txt/", fileName: "a.txt", parentPath: "/" });
     info = SFS.PathTool.parseDirPath("\\a.txt");
