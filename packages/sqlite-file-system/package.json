@@ -1,6 +1,6 @@
 {
     "name": "@ringoc/sqlite-file-system",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "main": "index.js",
     "license": "MIT",
     "description": "一个由sql管理的文件系统",
@@ -32,6 +32,7 @@
     },
     "bin": {
         "sfs-http": "./bin/http.js",
+        "sfs-ftp": "./bin/ftp.js",
         "sfs-test-data": "./bin/test_data.js"
     }
 }
