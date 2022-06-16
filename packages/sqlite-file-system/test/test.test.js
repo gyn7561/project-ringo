@@ -111,3 +111,37 @@ test("batchDelete", async () => {
     expect(await fs.existsFile("/b2.txt")).toBe(false);
 });
 
+test("batchRename", async () => {
+    await fs.batchWriteFiles([{ path: "/b1.txt", data: "TESTTEST" }, { path: "/b2.txt", data: "TESTTEST" }]);
+    await fs.batchRenameFiles([{ from: "/b1.txt", to: "/b3.txt" }, { from: "/b2.txt", to: "/b4.txt" }]);
+    expect(await fs.existsFile("/b3.txt")).toBe(true);
+    expect(await fs.existsFile("/b4.txt")).toBe(true);
+    await fs.batchDeleteFiles(["/b3.txt", "./b4.txt"]);
+});
+
+test("batchRenameDir", async () => {
+    await fs.mkdir("/data");
+    await fs.mkdir("/data/data2");
+    await fs.mkdir("/data/data3");
+    await fs.batchWriteFiles([{ path: "/data/b1.txt", data: "TESTTEST" }, { path: "/data/b2.txt", data: "TESTTEST" }]);
+    await fs.batchWriteFiles([{ path: "/data/data2/b1.txt", data: "TESTTEST" }, { path: "/data/data2/b2.txt", data: "TESTTEST" }]);
+    await fs.batchWriteFiles([{ path: "/data/data3/b1.txt", data: "TESTTEST" }, { path: "/data/data3/b2.txt", data: "TESTTEST" }]);
+    expect(await fs.existsFile("/data/b1.txt")).toBe(true);
+    expect(await fs.existsFile("/data/b2.txt")).toBe(true);
+    expect(await fs.existsFile("/data/data2/b1.txt")).toBe(true);
+    expect(await fs.existsFile("/data/data2/b2.txt")).toBe(true);
+    expect(await fs.existsFile("/data/data3/b1.txt")).toBe(true);
+    expect(await fs.existsFile("/data/data3/b2.txt")).toBe(true);
+    await fs.renameDir("/data", '/new');
+    expect(await fs.existsFile("/new/b1.txt")).toBe(true);
+    expect(await fs.existsFile("/new/b2.txt")).toBe(true);
+    expect(await fs.existsFile("/new/data2/b1.txt")).toBe(true);
+    expect(await fs.existsFile("/new/data2/b2.txt")).toBe(true);
+    expect(await fs.existsFile("/new/data3/b1.txt")).toBe(true);
+    expect(await fs.existsFile("/new/data3/b2.txt")).toBe(true);
+    await fs.deldir("/new");
+    expect(await fs.existsFile("/new/b1.txt")).toBe(false);
+    expect(await fs.existsFile("/new/data2/b1.txt")).toBe(false);
+    expect(await fs.existsFile("/new/data3/b1.txt")).toBe(false);
+});
+

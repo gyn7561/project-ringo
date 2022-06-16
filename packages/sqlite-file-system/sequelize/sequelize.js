@@ -84,12 +84,12 @@ async function initMain(savePath) {
     await Files.sync();
     await Info.sync();
     await Files.sequelize.query(`PRAGMA journal_mode = WAL;`);
-    if (!(await Files.findByPk("/"))) {
-        let root = await Files.create({ fullPath: "/" });
-        await root.save();
-    }
+    // if (!(await Files.findByPk("/"))) {
+    //     let root = await Files.create({ fullPath: "/" });
+    //     await root.save();
+    // }
     if (!(await Info.findByPk("init_info"))) {
-        let root = await Info.create({ id: "init_info", info: { version: "0.0.4" } });
+        let root = await Info.create({ id: "init_info", info: { version: "0.0.6" } });
         await root.save();
     }
     return { Files, Info };

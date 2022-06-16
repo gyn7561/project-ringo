@@ -98,11 +98,10 @@ module.exports = class FileSystem {
         try {
             await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, parentPath: parentPath });
         } catch (error) {
-            console.log(error);
-            console.log(error.original);
             if (error.original && error.original.code === "SQLITE_CONSTRAINT") {
                 throw new Error("创建文件夹失败 找不到父文件夹" + `${fullPath} (${path})`);
             } else {
+                console.error(error);
                 throw error;
             }
         }
@@ -284,7 +283,7 @@ module.exports = class FileSystem {
         } catch (error) {
             console.log(error);
             if (error.original && error.original.code === "SQLITE_CONSTRAINT") {
-                throw new Error("写入文件失败，可能是没有父文件夹" + fullPath + `(${path})`);
+                throw new Error("写入文件失败，可能是没有父文件夹" + fullPath + `(${path})P:${parentPath}`);
             } else {
                 throw error;
             }
@@ -311,6 +310,20 @@ module.exports = class FileSystem {
             saveData = await ungzip(saveData);
         }
         return saveData;
+    }
+
+    /**
+    * 读取文件信息
+    * @param {string} path 
+     * @returns { import("./types").FileInfo }
+    */
+    async getFileInfo(path) {
+        let { fullPath, extension } = PathTool.parseFilePath(path);
+        let data = await this.mainDB.Files.findByPk(fullPath, { raw: true });
+        if (!data) {
+            throw new Error("找不到文件" + path);
+        }
+        return data;
     }
 
     /**
@@ -375,4 +388,88 @@ module.exports = class FileSystem {
         });
         return result;
     }
+
+
+    /**
+     * 批量重命名
+     * @param {Array<import("./types").RenameParam>} list 参数 
+     */
+    async batchRenameFiles(list) {
+        let parsedList = list.map(({ from, to }) => {
+            let fromInfo = PathTool.parseFilePath(from);
+            let toInfo = PathTool.parseFilePath(to);
+            if (!fromInfo.validate) {
+                throw new Error("文件路径有误" + `${fromInfo.fullPath}(${from})`);
+            }
+            if (!toInfo.validate) {
+                throw new Error("文件路径有误" + `${toInfo.fullPath}(${to})`);
+            }
+            return { from: fromInfo.fullPath, to: toInfo.fullPath };
+        });
+
+        const t = await this.mainDB.Files.sequelize.transaction();
+        // let all = await this.mainDB.Files.findAll({
+        //     where: {
+        //         fullPath: {
+        //             [Op.in]: list.map(p => p.from)
+        //         }
+        //     }
+        // });
+        try {
+            for (let i = 0; i < parsedList.length; i++) {
+                let obj = parsedList[i];
+                let { parentPath, fileName } = PathTool.parseFilePath(obj.to);
+                await this.mainDB.Files.update({
+                    fullPath: obj.to,
+                    parentPath,
+                    fileName
+                },
+                    {
+                        where: {
+                            fullPath: obj.from
+                        },
+                        transaction: t
+                    }
+                );
+            }
+            await t.commit();
+        } catch (error) {
+            await t.rollback();
+            console.error(error);
+            throw new Error("重命名失败文件名重复");
+        }
+    }
+
+    async renameFile(from, to) {
+        return await this.batchRenameFiles([{ from, to }]);
+    }
+
+    async renameDir(from, to) {
+        let toInfo = PathTool.parseDirPath(to);
+        // let fromInfo = PathTool.parseDirPath(from);
+        if (await this.existsDir(to)) {
+            throw new Error("要重命名的文件夹已经存在" + to);
+        }
+        await this.mkdir(to);
+        let files = await this.listFiles(from);
+        let dirRenameList = [];
+        let fileRenameList = [];
+        for (let i = 0; i < files.length; i++) {
+            let file = files[i];
+            let isDir = file.fileUuid === null;
+            if (isDir) {
+                dirRenameList.push({ from: file.fullPath, to: toInfo.fullPath + "/" + file.fileName + "/" });
+            } else {
+                fileRenameList.push({ from: file.fullPath, to: toInfo.fullPath + "/" + file.fileName });
+            }
+        }
+
+        for (let i = 0; i < dirRenameList.length; i++) {
+            let dirTask = dirRenameList[i];
+            await this.renameDir(dirTask.from, dirTask.to);
+        }
+        await this.batchRenameFiles(fileRenameList);
+        await this.deldir(from);
+    }
+
 }

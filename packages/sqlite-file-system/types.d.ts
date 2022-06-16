@@ -14,3 +14,7 @@ export interface BatchWriteParam {
     data: string | Buffer;
     // size:number;
 }
+export interface RenameParam {
+    from: string;
+    to: string;
+}
