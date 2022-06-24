@@ -24,10 +24,12 @@
         "access": "public"
     },
     "devDependencies": {
+        "apify": "^2.3.2",
         "jest": "^28.1.1"
     },
     "scripts": {
-        "jest": "jest --verbose"
+        "jest": "jest --verbose",
+        "test-apify": "node ./test/request_queue_test.js"
     },
     "bin": {
         "ringoc-minio": "./storage/minio/bin.js"
