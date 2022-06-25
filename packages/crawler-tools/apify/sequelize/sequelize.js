@@ -2,7 +2,7 @@ const { Sequelize, Model, DataTypes } = require("sequelize");
 let path = require("path");
 async function buildSqliteSequelize(savePath) {
     let fullPath = path.resolve(savePath);
-    let mainSqlitePath = path.resolve(fullPath, "queue.sqlite.db");
+    let mainSqlitePath = path.resolve(fullPath);
     let opts = {
         dialect: "sqlite",
         storage: mainSqlitePath,

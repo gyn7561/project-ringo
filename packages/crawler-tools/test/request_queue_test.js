@@ -13,7 +13,7 @@ Apify.main(async () => {
 
     // let requestQueue = new MyRequestQueue(bRequestQueue);
 
-    let requestQueue = new SqlRequestQueue();
+    let requestQueue = new SqlRequestQueue("test_data/queue.db");
 
     await requestQueue.init();
 

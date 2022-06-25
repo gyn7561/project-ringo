@@ -68,13 +68,17 @@ function convertToApifyRequest(request) {
 
 module.exports = class SqlRequestQueue {
 
-    constructor() {
 
+    constructor(savePath) {
+        this.savePath = savePath;
+        if (!savePath) {
+            throw new Error("savePath:" + savePath + " error");
+        }
     }
 
     processingSet = new Set()
     async init() {
-        this.RequestQueueRequests = await buildSqliteSequelize("test_data");
+        this.RequestQueueRequests = await buildSqliteSequelize(this.savePath);
     }
 
     async addRequest(request, options = {}) {
@@ -176,21 +180,6 @@ module.exports = class SqlRequestQueue {
             order: col('orderNo')
         });
         return resultList.length === 0;
-        // return true;
-        // let resultList = await this.RequestQueueRequests.findAll({
-        //     attributes: ['id'],
-        //     where: {
-        //         id: {
-        //             [Op.notIn]: [...this.processingSet]
-        //         },
-        //         handledAt: {
-        //             [Op.eq]: null
-        //         }
-        //     },
-        //     limit: 1
-        // });
-        // let result = resultList.length === 0;
-        // console.log("isEmpty", result);
     }
 
     async markRequestHandled(request) {
