@@ -27,3 +27,4 @@ function getArgument(argName) {
     await s.init();
     SFS.createHttpServer(s, port);
 })();
+  
