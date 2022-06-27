@@ -1,11 +1,14 @@
 let seq = require("./sequelize/sequelize");
 let uuid = require("uuid");
+let fs = require("fs");
+let path = require("path");
 const { gzip, ungzip } = require('node-gzip');
 const Sequelize = require("sequelize");
 var replaceall = require("replaceall");
 const Op = Sequelize.Op;
 const PathTool = require("./PathTool");
 
+const FILE_SIZE_MB = 1024; //1G
 module.exports = class FileSystem {
 
     /**
@@ -16,6 +19,82 @@ module.exports = class FileSystem {
         this.savePath = savePath;
         this.volDBMap = new Map();
         this.zipFileExtensions = new Set(["txt", "json", "html"]);
+        process.on("exit", () => {
+            setTimeout(() => {
+                this.close();
+            }, 1000);
+        });
+        this.#dynamicVolWatch();
+    }
+
+    #closed = false;
+
+    #watchMap = new Map();
+    #volFileSizeMap = new Map();
+    #currentVoldId = 0;
+
+    #dynamicVolWatch() {
+        let watchFileById = async (id) => {
+            let dbPath = path.resolve(this.savePath, `${id}.sqlite.db`);
+            if (!this.#watchMap.has(dbPath)) {
+                if (fs.existsSync(dbPath)) {
+                    let currentSize = fs.statSync(dbPath).size / 1024 / 1024;
+                    this.#volFileSizeMap.set(id, currentSize);
+                    if (currentSize > FILE_SIZE_MB) {
+                        if (this.#currentVoldId.toString() === id) {//如果是当前最后一个文件 
+                            await this.#getVolDB((parseInt(id) + 1).toString());
+                            this.#currentVoldId = (parseInt(id) + 1);
+                            this.#dynamicVolWatch();
+                        }
+                    }
+                } else {
+                    this.#volFileSizeMap.set(id, 0);
+                }
+                let listener = async (curr, prev) => {
+                    let mb = curr.size / 1024 / 1024;
+                    this.#volFileSizeMap.set(id, mb);
+                    if (mb >= FILE_SIZE_MB) {
+                        if (this.#currentVoldId.toString() === id) {//如果是当前最后一个文件 
+                            await this.#getVolDB((parseInt(id) + 1).toString());
+                            console.log("文件大小超过限制生成新的数据库文件");
+                            this.#currentVoldId = (parseInt(id) + 1);
+                            this.#dynamicVolWatch();
+                        }
+                    }
+                };
+                if (this.#watchMap.has(dbPath)) {
+                    console.log("重复的ID!?");
+                } else {
+                    this.#watchMap.set(dbPath, listener);
+                    fs.watchFile(dbPath, listener);
+                }
+            }
+        }
+
+        for (let i = 0; i <= this.#currentVoldId; i++) {
+            let id = i.toString();
+            watchFileById(id);
+        }
+
+    }
+
+    /**
+     * 关闭数据库
+     */
+    async close() {
+        if (this.#closed) {
+            return;
+        }
+        this.#closed = true;
+        console.log("关闭数据库" + this.savePath);
+        this.mainDB.Files.sequelize.close();
+        this.#watchMap.forEach((v, k) => {
+            console.log("unwatch", k);
+            fs.unwatchFile(k, v);
+        });
+        this.volDBMap.forEach((v, k) => {
+            v.sequelize.close();
+        });
     }
 
     /**
@@ -28,7 +107,7 @@ module.exports = class FileSystem {
     /**
      * @private
      */
-    async getVolDB(id) {
+    async #getVolDB(id) {
         if (!this.volDBMap.has(id)) {
             this.volDBMap.set(id, await seq.initVol(this.savePath, id));
         }
@@ -39,7 +118,7 @@ module.exports = class FileSystem {
      * @private
      */
     async getAvailableVolId() {
-        return "0";
+        return this.#currentVoldId.toString();
     }
 
     /**
@@ -85,7 +164,7 @@ module.exports = class FileSystem {
     }
 
     async #deleteVolFile(volId, fileUuid) {
-        let volDb = await this.getVolDB(volId);
+        let volDb = await this.#getVolDB(volId);
         await volDb.destroy({ where: { id: fileUuid } });
     }
 
@@ -184,7 +263,7 @@ module.exports = class FileSystem {
             });
         });
 
-        await (await this.getVolDB(volId)).bulkCreate(volInfoList);
+        await (await this.#getVolDB(volId)).bulkCreate(volInfoList);
         await this.mainDB.Files.bulkCreate(fileInfoList, { updateOnDuplicate: ["size", "fileUuid", "storagePosition", "updatedAt"] });
         let delGroup = {};
         for (let i = 0; i < findResult.length; i++) {
@@ -193,7 +272,7 @@ module.exports = class FileSystem {
             delGroup[storagePosition].push(fileUuid);
         }
         let tasks = Object.keys(delGroup).map(async volId => {
-            let volDb = await this.getVolDB(volId);
+            let volDb = await this.#getVolDB(volId);
             await volDb.destroy({
                 where: {
                     id: {
@@ -239,7 +318,7 @@ module.exports = class FileSystem {
             delGroup[storagePosition].push(fileUuid);
         }
         let tasks = Object.keys(delGroup).map(async volId => {
-            let volDb = await this.getVolDB(volId);
+            let volDb = await this.#getVolDB(volId);
             await volDb.destroy({
                 where: {
                     id: {
@@ -262,7 +341,8 @@ module.exports = class FileSystem {
         let exists = await this.existsFile(path);
         let { fileName, parentPath, extension, fullPath } = PathTool.parseFilePath(path);
         let fileUuid = uuid.v4();
-        let volDb = await this.getVolDB("0");
+        let volId = await this.getAvailableVolId();
+        let volDb = await this.#getVolDB(volId);
         let saveData = Buffer.from(data);
         let size = saveData.byteLength;
         if (this.zipFileExtensions.has(extension)) {
@@ -275,10 +355,10 @@ module.exports = class FileSystem {
                 let data = await this.mainDB.Files.findByPk(fullPath);
                 let id = data.getDataValue("storagePosition");
                 let oldFileUuid = data.getDataValue("fileUuid");
-                await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" });
+                await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: volId });
                 this.#deleteVolFile(id, oldFileUuid);
             } else {
-                await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: "0" });
+                await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: volId });
             }
         } catch (error) {
             console.log(error);
@@ -303,7 +383,7 @@ module.exports = class FileSystem {
         }
         let volId = data.getDataValue("storagePosition");
         let fileUuid = data.getDataValue("fileUuid");
-        let volDb = await this.getVolDB(volId);
+        let volDb = await this.#getVolDB(volId);
         let findObj = await volDb.findByPk(fileUuid);
         let saveData = findObj.getDataValue("data");
         if (this.zipFileExtensions.has(extension)) {
