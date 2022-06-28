@@ -469,6 +469,23 @@ module.exports = class FileSystem {
         return result;
     }
 
+    /**
+     * 用正则表达式搜索文件
+     * @param {string} str 正则表达式
+     * @returns {Array<import("./types").FileInfo>}
+     */
+    async findFilesByLike(str) {
+        let result = await this.mainDB.Files.findAll({
+            where: {
+                fileName: {
+                    [Op.like]: str
+                }
+            },
+            raw: true
+        });
+        return result;
+    }
+
 
     /**
      * 批量重命名

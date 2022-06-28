@@ -85,8 +85,19 @@ test("listFiles", async () => {
 });
 
 test("findFiles", async () => {
+
     let result = await fs.findFiles("read");
     expect(result.filter(f => f.fullPath === "/read.txt").length).toBe(1);
+});
+
+test("findFilesByLike", async () => {
+    try {
+        let result = await fs.findFilesByLike("%read%txt%");
+        expect(result.filter(f => f.fullPath === "/read.txt").length).toBe(1);
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 });
 
 
@@ -103,7 +114,6 @@ test("batchWrite", async () => {
 });
 
 test("batchDelete", async () => {
-
     expect(await fs.existsFile("/b1.txt")).toBe(true);
     expect(await fs.existsFile("/b2.txt")).toBe(true);
     await fs.batchDeleteFiles(["/b1.txt", "./b2.txt"]);
