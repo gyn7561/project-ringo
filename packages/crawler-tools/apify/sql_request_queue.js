@@ -1,4 +1,4 @@
-const { buildSqliteSequelize } = require("./sequelize/sequelize");
+const { buildSequelize } = require("./sequelize/sequelize");
 const md5 = require("md5");
 
 const { Op, col } = require("sequelize");
@@ -44,6 +44,10 @@ function convertToApifyRequest(request) {
 
     // const Apify = require("apify");
 
+    if (typeof request.json === "string") {
+        request.json = JSON.parse(request.json);
+    }
+
     let obj = {
         id: request.id,
         uniqueKey: request.id,
@@ -68,17 +72,29 @@ function convertToApifyRequest(request) {
 
 module.exports = class SqlRequestQueue {
 
+    static createSqliteQueue(path) {
+        let opts = {
+            dialect: "sqlite",
+            storage: path,
+            logging: false
+        };
+        return new SqlRequestQueue(opts);
+    }
 
-    constructor(savePath) {
-        this.savePath = savePath;
-        if (!savePath) {
-            throw new Error("savePath:" + savePath + " error");
+    static createSqliteMemoryQueue() {
+        return new SqlRequestQueue({ dialect: 'sqlite', host: '', logging: false });
+    }
+
+    constructor(options) {
+        if (!options) {
+            throw new Error("options:" + options + " error");
         }
+        this.options = options;
     }
 
     processingSet = new Set()
     async init() {
-        this.RequestQueueRequests = await buildSqliteSequelize(this.savePath);
+        this.RequestQueueRequests = await buildSequelize(this.options);
     }
 
     async addRequest(request, options = {}) {
@@ -199,7 +215,7 @@ module.exports = class SqlRequestQueue {
             requestId: request.id,
             wasAlreadyPresent: true,
             wasAlreadyHandled: true,
-            request: convertToApifyRequest(request)
+            request: request
         }
     }
 
@@ -219,7 +235,6 @@ module.exports = class SqlRequestQueue {
 
     async reclaimRequest(request, options = {}) {
         const { forefront = false } = options;
-
         let obj = convertRequestToSqlObj(request, forefront ? -new Date().getTime() : 0);
         await this.RequestQueueRequests.update(obj, {
             where: {
@@ -237,4 +252,5 @@ module.exports = class SqlRequestQueue {
         }
     }
 
+    
 }

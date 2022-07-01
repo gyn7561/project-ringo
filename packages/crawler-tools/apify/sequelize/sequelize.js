@@ -1,5 +1,6 @@
 const { Sequelize, Model, DataTypes } = require("sequelize");
 let path = require("path");
+
 async function buildSqliteSequelize(savePath) {
     let fullPath = path.resolve(savePath);
     let mainSqlitePath = path.resolve(fullPath);
