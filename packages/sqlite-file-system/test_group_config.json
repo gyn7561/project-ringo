@@ -1,0 +1,7 @@
+{
+    "sp": {
+        "d2": "sp_data"
+    },
+    "path": "test_data",
+    "说明": "sp字段可以指定id的path位置,path字段可以指定动态id的文件夹。 会优先寻找sp中指定的文件夹位置,然后到path中寻找  (%path%/%id%/main.sqlite.db)"
+}
