@@ -102,7 +102,7 @@ module.exports = function (getFsFuncOrFs, port = 0) {
     let server = app.listen(port, function () {
         let addr = `http://localhost:${server.address().port}`;
         console.log('SFS Http Server Listening on port ' + server.address().port + " " + addr);
-        let uiUrl = `https://ringo-ui.vercel.app/SFS/${encodeURIComponent(addr)}/1/`;
+        let uiUrl = `https://ringo-ui.vercel.app/#/SFS/${encodeURIComponent(addr)}/1/`;
         console.log("UI: " + uiUrl);
     });
 }
