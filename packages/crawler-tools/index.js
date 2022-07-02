@@ -1,4 +1,5 @@
 var log4js = require("log4js");
+require("./httplog/createHttpLogServer");
 
 module.exports = {
     fetch: require("./fetch"),
