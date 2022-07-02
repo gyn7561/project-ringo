@@ -94,7 +94,5 @@ function getArgument(argName) {
         }
 
         SFS.createHttpServer(getFsLock, port);
-
     }
-
 })();

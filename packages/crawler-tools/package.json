@@ -1,6 +1,6 @@
 {
     "name": "@ringoc/crawler-tools",
-    "version": "0.0.3",
+    "version": "0.0.6",
     "main": "index.js",
     "license": "ISC",
     "description": "RINGOC爬虫工具包",
@@ -26,6 +26,7 @@
     },
     "devDependencies": {
         "apify": "^2.3.2",
+        "express": "^4.18.1",
         "jest": "^28.1.1"
     },
     "scripts": {
