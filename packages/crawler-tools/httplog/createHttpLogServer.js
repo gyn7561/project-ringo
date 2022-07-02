@@ -1,7 +1,7 @@
 function startHttpLogServer(port) {
-    let ClientRequestInterceptor = require("@mswjs/interceptors/lib/interceptors/ClientRequest").ClientRequestInterceptor;
-    let XMLHttpRequestInterceptor = require("@mswjs/interceptors/lib/interceptors/XMLHttpRequest").XMLHttpRequestInterceptor;
-    let FetchInterceptor = require("@mswjs/interceptors/lib/interceptors/fetch").FetchInterceptor;
+    // let ClientRequestInterceptor = require("@mswjs/interceptors/lib/interceptors/ClientRequest").ClientRequestInterceptor;
+    // let XMLHttpRequestInterceptor = require("@mswjs/interceptors/lib/interceptors/XMLHttpRequest").XMLHttpRequestInterceptor;
+    // let FetchInterceptor = require("@mswjs/interceptors/lib/interceptors/fetch").FetchInterceptor;
     let BatchInterceptor = require('@mswjs/interceptors/lib/BatchInterceptor').BatchInterceptor;
     let nodeInterceptors = require('@mswjs/interceptors/lib/presets/node').default;
 
@@ -17,12 +17,12 @@ function startHttpLogServer(port) {
     let onRequest = (request) => {
         console.log("onRequest");
         activeWsSet.forEach((ws) => {
-            ws.send(JSON.stringify(request));
+            ws.send(JSON.stringify({ ...request, _ts: new Date().getTime() }));
         });
     };
     let onResponse = (request, response) => {
         activeWsSet.forEach((ws) => {
-            ws.send(JSON.stringify({ ...response, _requestId: request.id }));
+            ws.send(JSON.stringify({ ...response, _requestId: request.id, _ts: new Date().getTime() }));
         });
     };
 
@@ -56,8 +56,8 @@ function startHttpLogServer(port) {
             console.log("收到消息", message);
         });
     });
-    console.log(`HTTP LOG SERVER listen on ws://localhost:${port}`)
-    console.log(`UI : https://ringo-ui.vercel.app/#/HttpLog/ws%3A%2F%2Flocalhost%3A${port}/1/`)
+    console.log(`HTTP LOG SERVER listen on ws://localhost:${server.address().port}`)
+    console.log(`UI : https://ringo-ui.vercel.app/#/HttpLog/ws%3A%2F%2Flocalhost%3A${server.address().port}/1/`)
 }
 
 if (process.argv.includes("--ringo-http-log-port")) {
