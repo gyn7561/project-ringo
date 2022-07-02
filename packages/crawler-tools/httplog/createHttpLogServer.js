@@ -15,7 +15,6 @@ function startHttpLogServer(port) {
     });
 
     let onRequest = (request) => {
-        console.log("onRequest");
         activeWsSet.forEach((ws) => {
             ws.send(JSON.stringify({ ...request, _ts: new Date().getTime() }));
         });
