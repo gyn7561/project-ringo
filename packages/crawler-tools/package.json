@@ -1,6 +1,6 @@
 {
     "name": "@ringoc/crawler-tools",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "main": "index.js",
     "license": "ISC",
     "description": "RINGOC爬虫工具包",
