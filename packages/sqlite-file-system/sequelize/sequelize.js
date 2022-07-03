@@ -2,6 +2,8 @@ let { Sequelize, Model, DataTypes } = require("sequelize");
 let path = require("path");
 let fs = require("fs");
 
+var pjson = require('../package.json');
+
 async function initVol(savePath, id) {
     let fullPath = path.resolve(savePath);
     let volSqlitePath = path.resolve(fullPath, `${id}.sqlite.db`);
@@ -89,7 +91,7 @@ async function initMain(savePath) {
     //     await root.save();
     // }
     if (!(await Info.findByPk("init_info"))) {
-        let root = await Info.create({ id: "init_info", info: { version: "0.0.6" } });
+        let root = await Info.create({ id: "init_info", info: { version: pjson.version } });
         await root.save();
     }
     return { Files, Info };

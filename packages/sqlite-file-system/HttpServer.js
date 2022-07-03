@@ -3,6 +3,7 @@ var bodyParser = require("body-parser");
 var compression = require('compression');
 // 当对主页发出 GET 请求时，响应“hello world”
 let PathTool = require("./PathTool");
+var pjson = require('./package.json');
 
 /**
  * 启动一个http服务器
@@ -36,6 +37,23 @@ module.exports = function (getFsFuncOrFs, port = 0) {
     }
 
     app.get('/', function (req, res) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "content-type");
+        res.header("Access-Control-Allow-Methods", "DELETE,PUT,POST,GET,OPTIONS");
+        res.send('Server start');
+    });
+
+    app.get("/getVersionInfo", async function (req, res) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "content-type");
+        res.header("Access-Control-Allow-Methods", "DELETE,PUT,POST,GET,OPTIONS");
+        res.send({ version: pjson.version });
+    })
+
+    app.get('/getIdList', function (req, res) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "content-type");
+        res.header("Access-Control-Allow-Methods", "DELETE,PUT,POST,GET,OPTIONS");
         res.send('Server start');
     });
 

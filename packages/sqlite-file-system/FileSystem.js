@@ -75,7 +75,6 @@ module.exports = class FileSystem {
             let id = i.toString();
             watchFileById(id);
         }
-
     }
 
     /**

@@ -28,7 +28,7 @@ function startHttpLogServer(port) {
     interceptor.on('request', onRequest);
     interceptor.on('response', onResponse);
     interceptor.on('error', (error) => {
-        console.log(id + 'Error:', error)
+        console.log('Error:', error)
     });
 
     let activeCount = 0;
