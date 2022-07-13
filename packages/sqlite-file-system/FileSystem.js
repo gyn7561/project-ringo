@@ -454,15 +454,24 @@ module.exports = class FileSystem {
     /**
      * 用字符串搜索文件
      * @param {string} name 搜索字符串
+     * @param {string} parentPath 父文件夹,为空则搜索所有
      * @returns {Array<import("./types").FileInfo>}
      */
-    async findFiles(name) {
+    async findFiles(name, parentPath) {
+        let whereObj = {
+            fileName: {
+                [Op.substring]: `%${name}%`
+            }
+        };
+        if (parentPath) {
+            let { fullPath } = PathTool.parseFilePath(parentPath);
+            if (fullPath === "/") {
+                fullPath = null;
+            }
+            whereObj.parentPath = fullPath;
+        }
         let result = await this.mainDB.Files.findAll({
-            where: {
-                fileName: {
-                    [Op.substring]: `%${name}%`
-                }
-            },
+            where: whereObj,
             raw: true
         });
         return result;
@@ -471,15 +480,24 @@ module.exports = class FileSystem {
     /**
      * 用正则表达式搜索文件
      * @param {string} str 正则表达式
+     * @param {string} parentPath 父文件夹,为空则搜索所有
      * @returns {Array<import("./types").FileInfo>}
      */
-    async findFilesByLike(str) {
+    async findFilesByLike(str, parentPath) {
+        let whereObj = {
+            fileName: {
+                [Op.like]: str
+            }
+        };
+        if (parentPath) {
+            let { fullPath } = PathTool.parseFilePath(parentPath);
+            if (fullPath === "/") {
+                fullPath = null;
+            }
+            whereObj.parentPath = fullPath;
+        }
         let result = await this.mainDB.Files.findAll({
-            where: {
-                fileName: {
-                    [Op.like]: str
-                }
-            },
+            where: whereObj,
             raw: true
         });
         return result;

@@ -49,7 +49,6 @@ test("read", async () => {
     await expect(async () => {
         await fs.readFileAsString("不存在的文件.txt");
     }).rejects.toThrow("找不到文件");
-
 })
 
 test("mkdir", async () => {
@@ -85,9 +84,25 @@ test("listFiles", async () => {
 });
 
 test("findFiles", async () => {
-
     let result = await fs.findFiles("read");
     expect(result.filter(f => f.fullPath === "/read.txt").length).toBe(1);
+    result = await fs.findFiles("read", "nani");
+    expect(result.filter(f => f.fullPath === "/read.txt").length).toBe(0);
+
+    await fs.mkdir("/search");
+    await fs.writeFile("/search/test.txt", "TESTSTR");
+    await fs.writeFile("/search/test2.txt", "TESTSTR");
+    await fs.writeFile("/search/test3.txt", "TESTSTR");
+    await fs.writeFile("test4.txt", "TESTSTR");
+    await fs.findFiles("test");
+    result = await fs.findFiles("test");
+    expect(result.length).toBe(4);
+    result = await fs.findFiles("test", "search");
+    expect(result.length).toBe(3);
+    result = await fs.findFiles("test", "/");
+    expect(result.length).toBe(1);
+    await fs.deldir("/search/");
+    await fs.deleteFile("test4.txt"); 
 });
 
 test("findFilesByLike", async () => {
@@ -98,6 +113,22 @@ test("findFilesByLike", async () => {
         console.error(error);
         throw error;
     }
+
+
+    await fs.mkdir("/search");
+    await fs.writeFile("/search/test.txt", "TESTSTR");
+    await fs.writeFile("/search/test2.txt", "TESTSTR");
+    await fs.writeFile("/search/test3.txt", "TESTSTR");
+    await fs.writeFile("test4.txt", "TESTSTR");
+    await fs.findFiles("test");
+    let result = await fs.findFilesByLike("%test%txt%");
+    expect(result.length).toBe(4);
+    result = await fs.findFilesByLike("%test%txt%", "search");
+    expect(result.length).toBe(3);
+    result = await fs.findFilesByLike("%test%txt%", "/");
+    expect(result.length).toBe(1);
+    await fs.deldir("/search/");
+    await fs.deleteFile("test4.txt");
 });
 
 

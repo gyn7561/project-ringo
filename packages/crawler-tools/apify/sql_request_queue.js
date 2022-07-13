@@ -78,7 +78,8 @@ module.exports = class SqlRequestQueue {
             storage: path,
             logging: false
         };
-        return new SqlRequestQueue(opts);
+        let result = new SqlRequestQueue(opts);
+        return result;
     }
 
     static createSqliteMemoryQueue() {
@@ -95,6 +96,9 @@ module.exports = class SqlRequestQueue {
     processingSet = new Set()
     async init() {
         this.RequestQueueRequests = await buildSequelize(this.options);
+        if (this.options.dialect === "sqlite") {
+            await this.RequestQueueRequests.sequelize.query(`PRAGMA journal_mode = WAL;`);
+        }
     }
 
     async addRequest(request, options = {}) {
@@ -252,5 +256,5 @@ module.exports = class SqlRequestQueue {
         }
     }
 
-    
+
 }
