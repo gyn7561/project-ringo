@@ -1,8 +1,7 @@
 let tools = require("../index");
 
 test("memory kv", async () => {
-    let KV = await tools.storage.sequelize.openSequelizeKVStorageSqliteMemory();
-
+    let KV = await tools.storage.sequelize.openSequelizeKVStorageSqliteMemory(); 
     await KV.create({ key: "key", value: { a: 1 } });
     await KV.create({ key: "key2", value: "value" });
     let value = await KV.findByPk("key");

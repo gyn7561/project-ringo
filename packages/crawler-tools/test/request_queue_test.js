@@ -3,6 +3,7 @@ let fs = require("fs");
 let AxiosRawCrawler = require("../apify/AxiosRawCrawler");
 let MDRequestQueue = require("../apify/md_request_queue");
 let SqlRequestQueue = require("../apify/sql_request_queue");
+let MemRequestQueue = require("../apify/memory_request_queue");
 let cheerio = require("cheerio");
 
 if (fs.existsSync("./apify_storage")) {
@@ -15,8 +16,7 @@ Apify.main(async () => {
 
     // let requestQueue = new MyRequestQueue(bRequestQueue);
 
-    let requestQueue = SqlRequestQueue.createSqliteMemoryQueue();
-
+    let requestQueue = new MemRequestQueue();
     await requestQueue.init();
 
     requestQueue = new Proxy(requestQueue, {

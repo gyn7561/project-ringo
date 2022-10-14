@@ -8,12 +8,17 @@ export interface FileInfo {
     createdAt: string;
     updatedAt: string;
 }
+export interface WriteFileOptions {
+    createDir?: boolean;
+}
 
 export interface BatchWriteParam {
     path: string;
     data: string | Buffer;
     // size:number;
+    options: WriteFileOptions?;
 }
+
 export interface RenameParam {
     from: string;
     to: string;

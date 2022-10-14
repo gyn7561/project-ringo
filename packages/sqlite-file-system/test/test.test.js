@@ -7,17 +7,24 @@ test("init", async () => {
     await fs.init();
 })
 
-test("save", async () => {
+test("writeFile", async () => {
     await fs.writeFile("/GGGG.txt", "TESTTEST");
     await expect(async () => {
         await fs.writeFile("/没有的文件夹/null.txt", "sss");
     }).rejects.toThrow("写入文件失败，可能是没有父文件夹");
+
     let exists = await fs.existsFile("/NOT_EXISTS.txt");
     expect(exists).toBe(false);
     exists = await fs.existsFile("/GGGG.txt");
     expect(exists).toBe(true);
     exists = await fs.existsFile("/没有的文件夹/null.txt");
     expect(exists).toBe(false);
+
+    await fs.writeFile("/没有的文件夹/null.txt", "sss", { createDir: true });
+    exists = await fs.existsFile("/没有的文件夹/null.txt");
+    expect(exists).toBe(true);
+    await fs.deleteFile("/没有的文件夹/null.txt");
+    await fs.deldir("/没有的文件夹");
 });
 
 test("delete", async () => {
@@ -67,6 +74,12 @@ test("mkdir", async () => {
     await fs.mkdir("/data/dir3");
     await fs.writeFile("/data/dir3/test.txt", "TESTSTR");
     expect(await fs.readFileAsString("/data/dir3/test.txt")).toBe("TESTSTR");
+
+    await expect(async () => {
+        await fs.mkdir("/data/dir4/dir5/dir6");
+    }).rejects.toThrow("创建文件夹失败 找不到父文件夹");
+    await fs.mkdir("/data/dir4/dir5/dir6", { recursive: true });
+    expect(await fs.existsDir("/data/dir4/dir5/dir6")).toBe(true);
 });
 
 test("del dir", async () => {
@@ -78,6 +91,7 @@ test("del dir", async () => {
 
 test("listFiles", async () => {
     let result = await fs.listFiles("/");
+    console.log(result);
     expect(result.length).toBe(2);
     expect(result.filter(f => f.fullPath === "/read.txt").length).toBe(1);
     expect(result.filter(f => f.fullPath === "/GGGG.txt").length).toBe(1);
@@ -102,7 +116,7 @@ test("findFiles", async () => {
     result = await fs.findFiles("test", "/");
     expect(result.length).toBe(1);
     await fs.deldir("/search/");
-    await fs.deleteFile("test4.txt"); 
+    await fs.deleteFile("test4.txt");
 });
 
 test("findFilesByLike", async () => {
@@ -142,6 +156,12 @@ test("batchWrite", async () => {
     await expect(async () => {
         await fs.batchWriteFiles([{ path: "/null/b1.txt", data: "TESTTEST" }, { path: "/null/b2.txt", data: "TESTTEST" }]);
     }).rejects.toThrow();
+
+    await fs.batchWriteFiles([{ path: "/null/b1.txt", data: "TESTTEST2", options: { createDir: true } }, { path: "/null/b2.txt", data: "TESTTEST", options: { createDir: true } }]);
+    expect(await fs.existsDir("/null/")).toBe(true);
+    expect(await fs.readFileAsString("/null/b1.txt")).toBe("TESTTEST2");
+    expect(await fs.readFileAsString("/null/b2.txt")).toBe("TESTTEST");
+    await fs.deldir("/null/");
 });
 
 test("batchDelete", async () => {
@@ -186,3 +206,49 @@ test("batchRenameDir", async () => {
     expect(await fs.existsFile("/new/data3/b1.txt")).toBe(false);
 });
 
+test("listFilesLimit", async () => {
+
+    //先清空文件
+    let all = await fs.listFiles();
+    for (let i = 0; i < all.length; i++) {
+        let f = all[i];
+        await fs.deleteFile(f.fullPath);
+    }
+    all = await fs.listFiles();
+    expect(all.length).toBe(0);
+
+    //写入文件
+    await fs.writeFile("/c.txt", "TESTTEST");
+    await fs.writeFile("/a.txt", "TESTTEST");
+    await fs.writeFile("/b.txt", "TESTTEST");
+    await fs.writeFile("/d.txt", "TESTTEST");
+    let listFiles = await fs.listFilesLimit("/", "", 3);
+    expect(listFiles.length).toBe(3);
+    expect(listFiles[0].fileName).toBe("a.txt");
+    expect(listFiles[1].fileName).toBe("b.txt");
+    expect(listFiles[2].fileName).toBe("c.txt");
+    listFiles = await fs.listFilesLimit("/", "/a.txt", 3); 
+    expect(listFiles.length).toBe(3);
+    expect(listFiles[0].fileName).toBe("b.txt");
+    expect(listFiles[1].fileName).toBe("c.txt");
+    expect(listFiles[2].fileName).toBe("d.txt");
+
+    await fs.mkdir("/test");
+    await fs.writeFile("/test/c.txt", "TESTTEST");
+    await fs.writeFile("/test/a.txt", "TESTTEST");
+    await fs.writeFile("/test/b.txt", "TESTTEST");
+    await fs.writeFile("/test/d.txt", "TESTTEST");
+    listFiles = await fs.listFilesLimit("/test", "", 3);
+    expect(listFiles.length).toBe(3);
+    expect(listFiles[0].fileName).toBe("a.txt");
+    expect(listFiles[1].fileName).toBe("b.txt");
+    expect(listFiles[2].fileName).toBe("c.txt");
+    listFiles = await fs.listFilesLimit("/test", "/test/a.txt", 3);
+    expect(listFiles.length).toBe(3);
+    expect(listFiles[0].fileName).toBe("b.txt");
+    expect(listFiles[1].fileName).toBe("c.txt");
+    expect(listFiles[2].fileName).toBe("d.txt");
+    await fs.batchDeleteFiles(["/c.txt", "/a.txt", "/b.txt", "/d.txt", "/test/c.txt", "/test/a.txt", "/test/b.txt", "/test/d.txt"]);
+    await fs.deldir("/test");
+
+});

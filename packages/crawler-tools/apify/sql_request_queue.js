@@ -185,6 +185,15 @@ module.exports = class SqlRequestQueue {
         return count;
     }
 
+
+    async tasksCount() {
+        let count = await this.RequestQueueRequests.count({
+            attributes: ['id']
+        });
+        return count;
+    }
+
+
     async isEmpty() {
         let resultList = await this.RequestQueueRequests.findAll({
             where: {

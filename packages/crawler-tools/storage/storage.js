@@ -1,4 +1,4 @@
-var lmdb = require('lmdb');
+
 var CommonKV = require('./commonKV');
 
 /**
@@ -8,6 +8,7 @@ var CommonKV = require('./commonKV');
  * @returns 
  */
 function openLMDBKvStorage(path, opt) {
+    var lmdb = require('lmdb');
     let myDB = lmdb.open({
         path: path,
         compression: true,

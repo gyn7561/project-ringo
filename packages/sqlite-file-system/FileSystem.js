@@ -171,19 +171,27 @@ module.exports = class FileSystem {
      * 创建文件夹
      * @param {string} path 路径
      */
-    async mkdir(path) {
+    async mkdir(path, options) {
+        let recursive = options?.recursive;
         let { parentPath, fullPath, fileName } = PathTool.parseDirPath(path);
         try {
             await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, parentPath: parentPath });
         } catch (error) {
             if (error.original && error.original.code === "SQLITE_CONSTRAINT") {
-                throw new Error("创建文件夹失败 找不到父文件夹" + `${fullPath} (${path})`);
+                if (recursive) {
+                    await this.mkdir(parentPath, { recursive: true });
+                    await this.mkdir(path, options);
+                } else {
+                    throw new Error("创建文件夹失败 找不到父文件夹" + `${fullPath} (${path})`);
+                }
             } else {
                 console.error(error);
                 throw error;
             }
         }
     }
+
+
 
     /**
      * 删除文件夹及其文件夹下的文件
@@ -214,6 +222,7 @@ module.exports = class FileSystem {
      * @param {Array<import("./types").BatchWriteParam>} batchList 
      */
     async batchWriteFiles(batchList) {
+        let mkdirList = [];
         let parsedBatchList = await Promise.all(batchList.map(async (param) => {
             let { fullPath, validate, extension, fileName, parentPath } = PathTool.parseFilePath(param.path);
             if (!validate) {
@@ -225,6 +234,10 @@ module.exports = class FileSystem {
                 saveData = await gzip(saveData);
             }
 
+            let options = param.options;
+            if (options?.createDir) {
+                mkdirList.push(parentPath);
+            }
             let newParam = {
                 fullPath: fullPath,
                 data: saveData,
@@ -234,6 +247,9 @@ module.exports = class FileSystem {
             }
             return newParam;
         }));
+
+        mkdirList = [...new Set(mkdirList)]; //去重
+        await Promise.all(mkdirList.map(dir => this.mkdir(dir, { recursive: true })));
 
         let findResult = await this.mainDB.Files.findAll({
             attributes: ["fileUuid", "storagePosition"],
@@ -335,8 +351,9 @@ module.exports = class FileSystem {
      * 写入/覆盖文件
      * @param {string} path 路径
      * @param {string | Buffer} data 数据
+     * @param {import("./types").WriteFileOptions} options 选项
      */
-    async writeFile(path, data) {
+    async writeFile(path, data, options) {
         let exists = await this.existsFile(path);
         let { fileName, parentPath, extension, fullPath } = PathTool.parseFilePath(path);
         let fileUuid = uuid.v4();
@@ -357,6 +374,10 @@ module.exports = class FileSystem {
                 await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: volId });
                 this.#deleteVolFile(id, oldFileUuid);
             } else {
+                let createDir = options?.createDir;
+                if (createDir) {
+                    await this.mkdir(parentPath, { recursive: true });
+                }
                 await this.mainDB.Files.upsert({ fullPath: fullPath, fileName: fileName, size: size, parentPath: parentPath, fileUuid: fileUuid, storagePosition: volId });
             }
         } catch (error) {
@@ -438,6 +459,9 @@ module.exports = class FileSystem {
      */
     async listFilesLimit(parentPath, start, limit) {
         let { fullPath } = PathTool.parseFilePath(parentPath);
+        if (fullPath === "/") {
+            fullPath = null;
+        }
         let result = await this.mainDB.Files.findAll({
             where: {
                 parentPath: fullPath,
@@ -445,6 +469,7 @@ module.exports = class FileSystem {
                     [Op.gt]: start
                 }
             },
+            order: this.mainDB.Files.sequelize.col('fullPath'),
             limit: limit,
             raw: true
         });

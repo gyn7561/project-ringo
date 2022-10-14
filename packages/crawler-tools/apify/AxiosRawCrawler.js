@@ -16,14 +16,36 @@ class AxiosRawCrawler extends apify.CheerioCrawler {
     async _requestFunction({ request, session, proxyUrl, requestAsBrowserOptions }) {
         let opts = this._getRequestOptions(request, session, proxyUrl, requestAsBrowserOptions);
 
-        //TODO 支持代理
-        let response = await axios.default.request({
+        
+        let axiosOpts = {
             method: opts.method,
             headers: opts.headers,
             url: opts.url,
             data: opts.body,
-            responseType: "arraybuffer"
-        })
+            responseType: "arraybuffer",
+
+        };
+        if (opts.proxyUrl) {
+            let uri = new URL(opts.proxyUrl);
+
+            //   host: string;
+            //   port: number;
+            //   auth?: {
+            //     username: string;
+            //     password: string;
+            //   };
+            //   protocol?: string;
+            axiosOpts.proxy = {
+                host: uri.hostname,
+                port: uri.port,
+                protocol: uri.protocol,
+                auth: {
+                    username: uri.username,
+                    password: uri.password,
+                }
+            }
+        }
+        let response = await axios.default.request(axiosOpts);
 
         response.url = response.request.res.responseUrl || response.config.url;
         response.statusCode = response.status;
